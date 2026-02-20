@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VoiceLife 🎙️ — Speak Your Way Up!</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;800;900&family=Fredoka+One&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Nunito', sans-serif; background: #1a1a2e; min-height: 100vh; overflow-x: hidden; user-select: none; }
+.screen { display: none; min-height: 100vh; }
+.screen.active { display: flex; flex-direction: column; }
+
+/* START */
+#start-screen { background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%); align-items: center; justify-content: center; padding: 2rem; position: relative; overflow: hidden; }
+.stars { position: absolute; inset: 0; pointer-events: none; }
+.star { position: absolute; width: 4px; height: 4px; background: white; border-radius: 50%; animation: twinkle var(--d,3s) ease-in-out infinite; opacity: 0.3; }
+@keyframes twinkle { 0%,100%{opacity:0.2;transform:scale(1)} 50%{opacity:1;transform:scale(1.5)} }
+.start-card { background: rgba(255,255,255,0.05); backdrop-filter: blur(20px); border: 2px solid rgba(255,255,255,0.1); border-radius: 32px; padding: 3rem 2.5rem; text-align: center; max-width: 480px; width: 100%; position: relative; z-index: 1; animation: popIn 0.6s cubic-bezier(0.34,1.56,0.64,1); }
+@keyframes popIn { from{opacity:0;transform:scale(0.8) translateY(20px)} to{opacity:1;transform:scale(1) translateY(0)} }
+.game-emoji { font-size: 5rem; display: block; margin-bottom: 0.5rem; animation: bounce 2s ease-in-out infinite; }
+@keyframes bounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-12px)} }
+.game-title { font-family: 'Fredoka One', cursive; font-size: 3.5rem; background: linear-gradient(135deg, #ffd700, #ff6b6b, #4ecdc4); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; margin-bottom: 0.25rem; }
+.game-sub { color: rgba(255,255,255,0.6); font-size: 1rem; margin-bottom: 2rem; font-weight: 700; }
+.name-input { width: 100%; padding: 1rem 1.5rem; border-radius: 16px; border: 2px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.08); color: white; font-family: 'Nunito', sans-serif; font-size: 1.1rem; font-weight: 700; text-align: center; outline: none; margin-bottom: 1.5rem; transition: border-color 0.2s; }
+.name-input::placeholder { color: rgba(255,255,255,0.3); }
+.name-input:focus { border-color: #ffd700; }
+.btn-start { width: 100%; padding: 1.1rem; border-radius: 16px; border: none; background: linear-gradient(135deg, #ffd700, #ff9500); color: #1a1a2e; font-family: 'Fredoka One', cursive; font-size: 1.4rem; cursor: pointer; transition: all 0.2s; box-shadow: 0 8px 24px rgba(255,215,0,0.3); }
+.btn-start:hover { transform: translateY(-3px); box-shadow: 0 12px 32px rgba(255,215,0,0.4); }
+.how-to { margin-top: 2rem; padding: 1.25rem; background: rgba(255,255,255,0.05); border-radius: 16px; text-align: left; }
+.how-to h3 { color: #4ecdc4; font-size: 0.85rem; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 0.75rem; }
+.how-to-item { display: flex; align-items: center; gap: 0.75rem; color: rgba(255,255,255,0.7); font-size: 0.9rem; margin-bottom: 0.5rem; font-weight: 700; }
+
+/* GAME SCREEN */
+#game-screen { background: #f0f4ff; }
+.top-bar { background: linear-gradient(135deg, #1a1a2e, #16213e); padding: 1rem 1.5rem; display: flex; align-items: center; gap: 1rem; position: sticky; top: 0; z-index: 100; box-shadow: 0 4px 20px rgba(0,0,0,0.3); }
+.player-info { display: flex; align-items: center; gap: 0.75rem; flex: 1; }
+.player-avatar { width: 44px; height: 44px; border-radius: 50%; background: linear-gradient(135deg, #ffd700, #ff6b6b); display: flex; align-items: center; justify-content: center; font-size: 1.5rem; flex-shrink: 0; border: 2px solid rgba(255,255,255,0.2); }
+.player-name { font-family: 'Fredoka One', cursive; color: white; font-size: 1rem; }
+.player-job { color: #ffd700; font-size: 0.75rem; font-weight: 700; }
+.stats-row { display: flex; gap: 0.75rem; }
+.stat-chip { background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; padding: 0.3rem 0.75rem; display: flex; align-items: center; gap: 0.4rem; font-size: 0.85rem; font-weight: 800; color: white; white-space: nowrap; }
+
+.city-banner { background: linear-gradient(135deg, #667eea, #764ba2); padding: 0.75rem 1.5rem; display: flex; align-items: center; justify-content: space-between; }
+.city-name-display { font-family: 'Fredoka One', cursive; color: white; font-size: 1.1rem; }
+.city-progress-bar { height: 8px; background: rgba(255,255,255,0.2); border-radius: 4px; width: 140px; overflow: hidden; }
+.city-progress-fill { height: 100%; background: linear-gradient(90deg, #ffd700, #ff9500); border-radius: 4px; transition: width 0.5s ease; }
+
+.game-content { flex: 1; padding: 1.5rem; display: flex; flex-direction: column; gap: 1.5rem; max-width: 640px; margin: 0 auto; width: 100%; }
+
+.char-card { background: white; border-radius: 24px; padding: 1.5rem; box-shadow: 0 8px 32px rgba(0,0,0,0.1); display: flex; gap: 1.25rem; align-items: flex-start; animation: slideIn 0.4s cubic-bezier(0.34,1.56,0.64,1); }
+@keyframes slideIn { from{opacity:0;transform:translateX(-20px)} to{opacity:1;transform:translateX(0)} }
+.char-avatar-big { width: 80px; height: 80px; border-radius: 20px; display: flex; align-items: center; justify-content: center; font-size: 3rem; flex-shrink: 0; position: relative; }
+.char-mood-badge { position: absolute; bottom: -6px; right: -6px; width: 28px; height: 28px; border-radius: 50%; background: white; display: flex; align-items: center; justify-content: center; font-size: 0.9rem; box-shadow: 0 2px 8px rgba(0,0,0,0.15); }
+.char-info { flex: 1; }
+.char-name { font-family: 'Fredoka One', cursive; font-size: 1.3rem; color: #1a1a2e; margin-bottom: 0.1rem; }
+.char-role { font-size: 0.8rem; font-weight: 700; color: #888; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.75rem; }
+.trust-meter { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.75rem; }
+.trust-label { font-size: 0.75rem; font-weight: 800; color: #555; }
+.trust-bar { flex: 1; height: 8px; background: #eee; border-radius: 4px; overflow: hidden; }
+.trust-fill { height: 100%; border-radius: 4px; transition: width 0.6s ease; }
+.trust-val { font-size: 0.75rem; font-weight: 800; color: #333; }
+.speech-bubble { background: #f8f9ff; border: 2px solid #e8ecff; border-radius: 16px; padding: 1rem 1.25rem; font-size: 1.05rem; line-height: 1.6; color: #333; font-weight: 700; }
+
+.answer-zone { background: white; border-radius: 24px; padding: 1.5rem; box-shadow: 0 8px 32px rgba(0,0,0,0.1); }
+.answer-title { font-family: 'Fredoka One', cursive; font-size: 1.1rem; color: #1a1a2e; margin-bottom: 1rem; }
+.choices { display: flex; flex-direction: column; gap: 0.75rem; }
+.choice-btn { width: 100%; padding: 1rem 1.25rem; border-radius: 16px; border: 2px solid #e8ecff; background: #f8f9ff; font-family: 'Nunito', sans-serif; font-size: 1rem; font-weight: 700; color: #333; cursor: pointer; text-align: left; transition: all 0.2s; display: flex; align-items: flex-start; gap: 0.75rem; line-height: 1.4; }
+.choice-btn:hover:not(:disabled) { border-color: #667eea; background: #f0f0ff; transform: translateX(4px); }
+.choice-btn.correct { border-color: #51cf66; background: #f0fff4; color: #2d8a4e; animation: correct-flash 0.4s ease; }
+.choice-btn.wrong { border-color: #ff6b6b; background: #fff5f5; color: #c92a2a; animation: shake 0.4s ease; }
+@keyframes correct-flash { 0%,100%{background:#f0fff4} 50%{background:#c3fae8} }
+@keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-8px)} 75%{transform:translateX(8px)} }
+.choice-btn:disabled { cursor: default; }
+.choice-tag { font-size: 0.7rem; font-weight: 800; letter-spacing: 0.08em; padding: 0.2rem 0.5rem; border-radius: 6px; flex-shrink: 0; white-space: nowrap; margin-top: 2px; }
+
+.result-banner { border-radius: 20px; padding: 1.25rem 1.5rem; font-weight: 800; font-size: 1rem; line-height: 1.5; display: none; animation: popIn 0.4s cubic-bezier(0.34,1.56,0.64,1); white-space: pre-line; }
+.result-banner.show { display: block; }
+.result-banner.win { background: linear-gradient(135deg, #c3fae8, #d3f9d8); color: #2d8a4e; border: 2px solid #51cf66; }
+.result-banner.lose { background: linear-gradient(135deg, #ffe3e3, #fff0f0); color: #c92a2a; border: 2px solid #ff6b6b; }
+.result-title { font-family: 'Fredoka One', cursive; font-size: 1.3rem; margin-bottom: 0.25rem; }
+.next-btn { margin-top: 1rem; width: 100%; padding: 0.875rem; border-radius: 14px; border: none; background: linear-gradient(135deg, #667eea, #764ba2); color: white; font-family: 'Fredoka One', cursive; font-size: 1.2rem; cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 16px rgba(102,126,234,0.3); }
+.next-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(102,126,234,0.4); }
+
+.score-pop { position: fixed; font-family: 'Fredoka One', cursive; font-size: 2rem; pointer-events: none; z-index: 999; animation: scorePop 1.2s ease-out forwards; }
+@keyframes scorePop { 0%{opacity:1;transform:translateY(0) scale(1)} 100%{opacity:0;transform:translateY(-80px) scale(1.5)} }
+
+.progress-dots { display: flex; justify-content: center; gap: 8px; padding: 1rem; flex-wrap: wrap; }
+.dot { width: 12px; height: 12px; border-radius: 50%; background: #ddd; transition: all 0.3s; }
+.dot.done { background: #51cf66; transform: scale(1.2); }
+.dot.current { background: #667eea; transform: scale(1.3); animation: pulse 1s ease-in-out infinite; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.6} }
+
+/* CITY UNLOCK */
+#city-screen { background: linear-gradient(135deg, #667eea, #764ba2); align-items: center; justify-content: center; padding: 2rem; }
+.city-unlock-card { background: white; border-radius: 32px; padding: 3rem 2rem; text-align: center; max-width: 400px; width: 100%; animation: popIn 0.6s cubic-bezier(0.34,1.56,0.64,1); }
+.city-unlock-emoji { font-size: 6rem; display: block; margin-bottom: 1rem; animation: bounce 1s ease-in-out infinite; }
+.city-unlock-title { font-family: 'Fredoka One', cursive; font-size: 2rem; color: #1a1a2e; margin-bottom: 0.5rem; }
+.city-unlock-sub { color: #667eea; font-weight: 800; font-size: 1rem; margin-bottom: 1rem; }
+.city-unlock-desc { color: #555; font-size: 0.95rem; line-height: 1.6; margin-bottom: 2rem; }
+
+/* WIN */
+#win-screen { background: linear-gradient(135deg, #f6d365, #fda085); align-items: center; justify-content: center; padding: 2rem; }
+.win-card { background: white; border-radius: 32px; padding: 3rem 2rem; text-align: center; max-width: 440px; width: 100%; animation: popIn 0.6s cubic-bezier(0.34,1.56,0.64,1); }
+.confetti-emoji { font-size: 4rem; display: block; margin-bottom: 1rem; animation: spin 2s linear infinite; }
+@keyframes spin { 0%{transform:rotate(0deg)} 100%{transform:rotate(360deg)} }
+.win-title { font-family: 'Fredoka One', cursive; font-size: 2.2rem; color: #1a1a2e; margin-bottom: 0.5rem; }
+.win-sub { color: #888; font-weight: 800; margin-bottom: 2rem; }
+.final-stats { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; margin-bottom: 2rem; }
+.final-stat { background: #f8f9ff; border-radius: 16px; padding: 1rem 0.5rem; }
+.final-stat-num { font-family: 'Fredoka One', cursive; font-size: 1.8rem; display: block; }
+.final-stat-label { font-size: 0.7rem; font-weight: 800; color: #888; text-transform: uppercase; letter-spacing: 0.05em; }
+.play-again-btn { width: 100%; padding: 1.1rem; border-radius: 16px; border: none; background: linear-gradient(135deg, #1a1a2e, #16213e); color: white; font-family: 'Fredoka One', cursive; font-size: 1.4rem; cursor: pointer; transition: all 0.2s; }
+.play-again-btn:hover { transform: translateY(-3px); box-shadow: 0 12px 32px rgba(0,0,0,0.3); }
+
+@media(max-width:480px) { .stats-row { gap: 0.4rem; } .stat-chip { font-size: 0.75rem; padding: 0.25rem 0.5rem; } .game-content { padding: 1rem; } .char-card { flex-direction: column; } .char-avatar-big { width: 60px; height: 60px; font-size: 2rem; } }
+</style>
+</head>
+<body>
+
+<!-- START -->
+<div id="start-screen" class="screen active">
+  <div class="stars" id="stars"></div>
+  <div class="start-card">
+    <span class="game-emoji">🎙️</span>
+    <h1 class="game-title">VoiceLife</h1>
+    <p class="game-sub">Speak your way from zero to world leader!</p>
+    <input class="name-input" id="player-name" type="text" placeholder="Enter your name..." maxlength="16">
+    <button class="btn-start" onclick="startGame()">▶ Start Playing!</button>
+    <div class="how-to">
+      <h3>How to Play</h3>
+      <div class="how-to-item"><span>💬</span> Read what the character says to you</div>
+      <div class="how-to-item"><span>🎯</span> Pick the BEST response from 3 choices</div>
+      <div class="how-to-item"><span>⭐</span> Earn Reputation, Confidence &amp; Coins</div>
+      <div class="how-to-item"><span>🌍</span> Unlock new cities &amp; better jobs!</div>
+      <div class="how-to-item"><span>🏆</span> 15 conversations — become a World Leader!</div>
+    </div>
+  </div>
+</div>
+
+<!-- GAME -->
+<div id="game-screen" class="screen">
+  <div class="top-bar">
+    <div class="player-info">
+      <div class="player-avatar" id="player-avatar">😊</div>
+      <div>
+        <div class="player-name" id="display-name">Player</div>
+        <div class="player-job" id="display-job">Unemployed</div>
+      </div>
+    </div>
+    <div class="stats-row">
+      <div class="stat-chip"><span>⭐</span><span id="rep-val">0</span></div>
+      <div class="stat-chip"><span>💪</span><span id="con-val">50</span></div>
+      <div class="stat-chip"><span>💰</span><span id="coin-val">0</span></div>
+    </div>
+  </div>
+  <div class="city-banner">
+    <div class="city-name-display" id="city-display">🏘️ Hometown</div>
+    <div style="text-align:right">
+      <div style="color:rgba(255,255,255,0.7);font-size:0.7rem;font-weight:800;margin-bottom:4px">CITY PROGRESS</div>
+      <div class="city-progress-bar"><div class="city-progress-fill" id="city-prog" style="width:0%"></div></div>
+    </div>
+  </div>
+  <div class="progress-dots" id="progress-dots"></div>
+  <div class="game-content">
+    <div class="char-card" id="char-card">
+      <div class="char-avatar-big" id="char-avatar-big">
+        <span id="char-emoji">👩‍💼</span>
+        <div class="char-mood-badge" id="char-mood">😐</div>
+      </div>
+      <div class="char-info">
+        <div class="char-name" id="char-name">Loading...</div>
+        <div class="char-role" id="char-role">...</div>
+        <div class="trust-meter">
+          <span class="trust-label">Trust</span>
+          <div class="trust-bar"><div class="trust-fill" id="trust-fill" style="width:40%;background:#ffd700"></div></div>
+          <span class="trust-val" id="trust-val">40%</span>
+        </div>
+        <div class="speech-bubble" id="char-speech">Hello!</div>
+      </div>
+    </div>
+    <div class="answer-zone">
+      <div class="answer-title">🎙️ What do you say?</div>
+      <div class="choices" id="choices"></div>
+    </div>
+    <div class="result-banner" id="result-banner">
+      <div class="result-title" id="result-title"></div>
+      <div id="result-desc"></div>
+      <button class="next-btn" id="next-btn" onclick="nextQuestion()">Next Conversation →</button>
+    </div>
+  </div>
+</div>
+
+<!-- CITY UNLOCK -->
+<div id="city-screen" class="screen">
+  <div class="city-unlock-card">
+    <span class="city-unlock-emoji" id="unlock-emoji">🗼</span>
+    <div class="city-unlock-title" id="unlock-title">New City!</div>
+    <div class="city-unlock-sub" id="unlock-sub">Your reputation opened new doors!</div>
+    <div class="city-unlock-desc" id="unlock-desc">Keep speaking well!</div>
+    <button class="next-btn" onclick="continueAfterCity()" style="margin-top:0">Let's Go! 🚀</button>
+  </div>
+</div>
+
+<!-- WIN -->
+<div id="win-screen" class="screen">
+  <div class="win-card">
+    <span class="confetti-emoji">🏆</span>
+    <div class="win-title" id="win-title">You're a World Leader!</div>
+    <div class="win-sub" id="win-sub">Amazing!</div>
+    <div class="final-stats">
+      <div class="final-stat"><span class="final-stat-num" id="final-rep" style="color:#ffd700">0</span><span class="final-stat-label">Reputation</span></div>
+      <div class="final-stat"><span class="final-stat-num" id="final-con" style="color:#4ecdc4">0</span><span class="final-stat-label">Confidence</span></div>
+      <div class="final-stat"><span class="final-stat-num" id="final-coins" style="color:#51cf66">0</span><span class="final-stat-label">Coins</span></div>
+    </div>
+    <div style="background:#f8f9ff;border-radius:16px;padding:1rem;margin-bottom:1.5rem;color:#555;font-size:0.95rem;line-height:1.6;font-weight:700;" id="win-feedback"></div>
+    <button class="play-again-btn" onclick="playAgain()">🔄 Play Again!</button>
+  </div>
+</div>
+
+<script>
+const CITIES = [
+  { name: "🏘️ Hometown", questsNeeded: 3 },
+  { name: "🌆 Metro City", questsNeeded: 4 },
+  { name: "🗼 Tokyo", questsNeeded: 4 },
+  { name: "🗽 New York", questsNeeded: 4 },
+  { name: "🌏 Global HQ", questsNeeded: 3 }
+];
+
+const CITY_UNLOCKS = [
+  null,
+  { emoji: "🌆", title: "Metro City Unlocked!", sub: "Your confidence is growing!", desc: "You've impressed enough people that big-city companies want to meet you. New characters, bigger stakes!" },
+  { emoji: "🗼", title: "Tokyo Unlocked! こんにちは!", sub: "International doors are opening!", desc: "Your reputation has crossed borders! Global companies are noticing your skills. Japan awaits — learn to adapt your style!" },
+  { emoji: "🗽", title: "New York Unlocked!", sub: "You're playing at world level!", desc: "The biggest deals, the toughest negotiators — New York is calling your name. One wrong word can cost millions!" },
+  { emoji: "🌏", title: "Global HQ — Final Stage!", sub: "Almost a world leader!", desc: "This is the top. Three final conversations between you and legendary status. Every word counts!" }
+];
+
+const QUESTIONS = [
+  // HOMETOWN
+  { city:0, char:{emoji:"👴",bg:"#fff3cd",name:"Mr. Kumar",role:"Corner Shop Owner",mood:"🤔",trust:35},
+    speech:"Young person, I need someone to manage my shop for two days. My helper is sick. Why should I trust YOU?",
+    choices:[
+      {text:"Um... I don't know... maybe I could try? I guess...",tag:"😬 Weak",correct:false,fb:"Hesitation and 'um's signal low confidence. Mr. Kumar needs certainty, not doubt!"},
+      {text:"Sir, I'm reliable and I learn fast. I've helped at home shops before — you can call my neighbor as a reference.",tag:"💪 Confident",correct:true,fb:"Specific, confident, and offered proof! Mr. Kumar immediately trusted you more."},
+      {text:"Because I need money and nobody else applied.",tag:"😅 Honest but wrong",correct:false,fb:"Talking about YOUR need instead of HIS need never wins opportunities. Focus on what you bring!"}
+    ],
+    win:{rep:15,con:10,coins:200,trust:75,mood:"😊",job:"Shop Helper"},
+    lose:{rep:-5,con:-10,coins:0,trust:25,mood:"😒"}
+  },
+  { city:0, char:{emoji:"👩‍🏫",bg:"#d4edda",name:"Mrs. Patel",role:"English Teacher & Mentor",mood:"😊",trust:50},
+    speech:"I'm offering free communication classes to ONE student. Tell me in one sentence why you deserve this chance.",
+    choices:[
+      {text:"I want to improve my English so I can get better opportunities and make my family proud.",tag:"❤️ Genuine",correct:true,fb:"Clear purpose + emotional honesty = memorable. Mrs. Patel selected you instantly!"},
+      {text:"I am a very good student and I study very hard every day.",tag:"🙄 Too generic",correct:false,fb:"Too vague! Everyone says this. What makes YOU different from the other 20 students she could choose?"},
+      {text:"Please ma'am, without this I cannot do anything in life.",tag:"😢 Desperate",correct:false,fb:"Desperation puts pressure on the listener. Lead with your value, not your need — always!"}
+    ],
+    win:{rep:12,con:15,coins:0,trust:80,mood:"🤩",job:"Shop Helper + Student"},
+    lose:{rep:-3,con:-5,coins:0,trust:35,mood:"😕"}
+  },
+  { city:0, char:{emoji:"🧑‍💼",bg:"#cfe2ff",name:"Rahul",role:"Recruiter (Your Friend's Brother)",mood:"😐",trust:20},
+    speech:"My company has a junior position. Why would you leave the shop job for this? Seems like a risk for you.",
+    choices:[
+      {text:"The shop job pays less and I want more money.",tag:"💸 Wrong reason",correct:false,fb:"Making money the main reason makes you look disloyal to recruiters. They'll worry you'll leave them too!"},
+      {text:"I'm grateful for what the shop taught me — customer care and responsibility. Now I want to grow those skills in a structured company.",tag:"🌱 Growth mindset",correct:true,fb:"You honored your past and showed ambition. Rahul was impressed by your maturity — rare at your level!"},
+      {text:"The shop owner isn't always nice to me.",tag:"😬 Complaining",correct:false,fb:"Never badmouth a current or past employer! It's a major red flag for every recruiter in every industry."}
+    ],
+    win:{rep:20,con:12,coins:500,trust:70,mood:"😊",job:"Junior Associate"},
+    lose:{rep:-8,con:-8,coins:0,trust:15,mood:"😒"}
+  },
+  // METRO CITY
+  { city:1, char:{emoji:"👩‍💼",bg:"#fce4ec",name:"Sarah Chen",role:"Head of Product",mood:"😤",trust:30},
+    speech:"You have NO corporate experience. Our last hire from your background quit in 2 weeks. Convince me you're different.",
+    choices:[
+      {text:"I know I have no experience, but I promise I will work very hard. Please give me a chance.",tag:"🙏 Too pleading",correct:false,fb:"Promises without evidence are weak. Sarah has heard this from everyone who failed before you. Try harder!"},
+      {text:"My background makes me better — I see problems customers face because I've been one. I ask 'why' before 'how'. That's rare.",tag:"🔄 Smart reframe",correct:true,fb:"You turned your weakness into a unique strength! Sarah sits up straight. That's a smart communicator."},
+      {text:"That person who failed wasn't dedicated enough. I'm completely different from them.",tag:"🤷 Risky",correct:false,fb:"Talking badly about someone Sarah hired feels disloyal. She doesn't know you yet — this backfires badly!"}
+    ],
+    win:{rep:18,con:15,coins:800,trust:72,mood:"🤔",job:"Product Trainee"},
+    lose:{rep:-10,con:-12,coins:0,trust:18,mood:"😠"}
+  },
+  { city:1, char:{emoji:"🧑‍💻",bg:"#e8f5e9",name:"Dev",role:"Your Angry Teammate",mood:"😠",trust:15},
+    speech:"You changed my code without asking! I spent 3 days on that feature and you just rewrote it! How dare you?",
+    choices:[
+      {text:"You're overreacting. My version is objectively better. Look at the results.",tag:"😤 Defensive",correct:false,fb:"Even if you're right, being dismissive destroys teamwork. Dev will avoid you and complain for months."},
+      {text:"Dev, I was completely wrong not to ask first. Your core logic was right — I just added to it. Can we look at it together?",tag:"🤝 Accountable",correct:true,fb:"Owning the mistake + honoring his work = conflict resolved in 30 seconds. Dev is now your loyal ally!"},
+      {text:"I'm sorry but the manager specifically asked me to improve performance this week...",tag:"😅 Blame-shifting",correct:false,fb:"Blaming the manager makes you look like a spy. Your whole team's trust evaporates instantly."}
+    ],
+    win:{rep:15,con:8,coins:300,trust:65,mood:"😊",job:"Product Trainee"},
+    lose:{rep:-12,con:-15,coins:0,trust:5,mood:"😤"}
+  },
+  { city:1, char:{emoji:"👨‍💼",bg:"#ede7f6",name:"Mr. Wong",role:"Division Manager",mood:"😐",trust:45},
+    speech:"You've been here 3 months. Give me one reason to promote you over Meera, who has been here 2 years.",
+    choices:[
+      {text:"Because I work harder than anyone — I come early and leave late every single day.",tag:"⏰ Effort ≠ results",correct:false,fb:"Managers promote RESULTS, not hours. Working late without impact just shows you're slow, not dedicated."},
+      {text:"I fixed the customer complaint process that had been broken for 8 months, saving the team 4 hours per week. I discussed it with Meera too — she agreed.",tag:"📊 Results + respect",correct:true,fb:"Specific results + no competition with colleagues = perfect answer. Promotion approved! Brilliant move!"},
+      {text:"Meera is good but she's a bit comfortable in her role. I'm more hungry for growth.",tag:"🗡️ Undermining",correct:false,fb:"You just threw a colleague under the bus AND showed you'd do the same to others. Mr. Wong makes a note."}
+    ],
+    win:{rep:25,con:18,coins:1500,trust:80,mood:"🤩",job:"Team Lead"},
+    lose:{rep:-15,con:-10,coins:0,trust:30,mood:"😕"}
+  },
+  { city:1, char:{emoji:"📺",bg:"#fff8e1",name:"TV Reporter",role:"Live News Interview",mood:"😐",trust:50},
+    speech:"Your team's product launched today and users are complaining it's confusing. How do you respond to that criticism?",
+    choices:[
+      {text:"We hear our users clearly. We've identified 3 pain points and we're releasing an update within 48 hours. Feedback like this makes us better.",tag:"📣 Proactive",correct:true,fb:"Specific timeline + gratitude for feedback = you look professional and in control. The clip goes viral!"},
+      {text:"Some people just don't like change. Our product is actually very intuitive for most users.",tag:"🙈 Dismissive",correct:false,fb:"Dismissing customer complaints on live TV = PR disaster. Stock drops. Your CEO is watching and NOT happy."},
+      {text:"No comment at this time.",tag:"🚫 Avoidance",correct:false,fb:"Silence on camera looks guilty. The story runs as 'Company refuses to address complaints.' Game over."}
+    ],
+    win:{rep:22,con:15,coins:1000,trust:78,mood:"😊",job:"Team Lead"},
+    lose:{rep:-20,con:-15,coins:0,trust:40,mood:"😒"}
+  },
+  // TOKYO
+  { city:2, char:{emoji:"🎎",bg:"#e3f2fd",name:"Tanaka-san",role:"Japanese Partner Company",mood:"🤔",trust:25},
+    speech:"We have heard good things. However, we would like to understand your company's philosophy before discussing business.",
+    choices:[
+      {text:"Let's get to the deal. Our terms are competitive and I think the numbers will impress you.",tag:"⚡ Too fast",correct:false,fb:"Rushing to business before building relationship is deeply disrespectful in Japanese culture. Meeting ends early."},
+      {text:"We believe a successful partnership is built on trust first, then results. We would be honored to learn your values before sharing ours.",tag:"🙏 Respectful",correct:true,fb:"Listening before talking is a sign of wisdom here. Tanaka-san smiles and pours you tea. Partnership begins!"},
+      {text:"Our company was founded in 2018 and we have 250 employees and strong revenue growth...",tag:"📊 Facts dump",correct:false,fb:"They asked about philosophy, not data. You failed to listen to what was actually being asked. Cultural fail."}
+    ],
+    win:{rep:28,con:20,coins:3000,trust:72,mood:"😊",job:"International Manager"},
+    lose:{rep:-18,con:-12,coins:0,trust:10,mood:"😐"}
+  },
+  { city:2, char:{emoji:"🏢",bg:"#f3e5f5",name:"Global Team",role:"5 Countries on the Video Call",mood:"😐",trust:40},
+    speech:"CRISIS! A bug is affecting 100,000 users in 3 countries. Everyone is talking at once. What do you do RIGHT NOW?",
+    choices:[
+      {text:"Okay okay, um, let's not panic everyone... does anyone have any ideas about what we should do first?",tag:"😰 No leadership",correct:false,fb:"In a crisis, hesitation makes panic worse. People needed a leader and got a question. The chaos doubles."},
+      {text:"STOP. One voice at a time. Amir — 60 seconds: what broke and when? Then Liu, then Priya. I'm taking notes.",tag:"🎯 Take control",correct:true,fb:"Clear structure under pressure = real leadership! The team calms instantly. Crisis resolved in 2 hours. Hero!"},
+      {text:"I'll send everyone a detailed email summary of the situation right now.",tag:"📧 Wrong tool",correct:false,fb:"Email during a live crisis is too slow. The team needed real-time coordination, not a memo. 20,000 more affected."}
+    ],
+    win:{rep:30,con:25,coins:4000,trust:85,mood:"🤩",job:"Crisis Director"},
+    lose:{rep:-22,con:-20,coins:0,trust:25,mood:"😟"}
+  },
+  { city:2, char:{emoji:"💰",bg:"#e8f5e9",name:"Yuki Tanaka",role:"Investor, ¥5 Billion Fund",mood:"😤",trust:20},
+    speech:"Your market projection seems optimistic by 3x. Why should I believe these numbers?",
+    choices:[
+      {text:"Our analysts spent 3 months on these projections. We are very confident they are accurate.",tag:"🛡️ Defensive",correct:false,fb:"'We are confident' is not data. Defending a challenged projection without pivoting shows poor judgment to investors."},
+      {text:"You're right to challenge it. Even at 1/3 the market size, your return is 4x in 5 years. Want me to walk through that math?",tag:"🧮 Reframe + offer",correct:true,fb:"You agreed, explained, and redirected to their actual concern — returns! Yuki opens her laptop. You're in!"},
+      {text:"Every projection has uncertainty. That's just how markets work.",tag:"🤷 Deflect",correct:false,fb:"True, but completely useless. You gave no reason to trust YOUR projection specifically. Yuki closes her notebook."}
+    ],
+    win:{rep:32,con:22,coins:8000,trust:75,mood:"🤔",job:"Founder / Director"},
+    lose:{rep:-20,con:-18,coins:0,trust:12,mood:"😒"}
+  },
+  { city:2, char:{emoji:"🎤",bg:"#fff3e0",name:"Conference Audience",role:"500 People + Live Stream",mood:"😐",trust:50},
+    speech:"You're mid-presentation and your slides CRASH. The room goes completely silent. Everyone is staring at you.",
+    choices:[
+      {text:"Um... I'm so sorry about this... can someone help? I'm really, really sorry...",tag:"😱 Panic",correct:false,fb:"The audience feels your panic. The energy drains from the room instantly. Very hard to recover from this!"},
+      {text:"Ha — the slides decided this talk should be more human! While we fix it, tell me: what's your biggest communication challenge at work?",tag:"😄 Confident + fun",correct:true,fb:"Pure charisma! You turned a technical disaster into an audience moment. They love you. Standing ovation!"},
+      {text:"Technical difficulties. I will read from my notes while IT resolves this issue.",tag:"📋 Safe but flat",correct:false,fb:"Technically fine, but you missed a golden chance to shine. Great speakers turn problems into highlights!"}
+    ],
+    win:{rep:28,con:30,coins:5000,trust:88,mood:"🤩",job:"Keynote Speaker"},
+    lose:{rep:-15,con:-25,coins:0,trust:40,mood:"😕"}
+  },
+  // NEW YORK
+  { city:3, char:{emoji:"🏦",bg:"#e3f2fd",name:"Marcus Black",role:"Wall Street Partner",mood:"😤",trust:15},
+    speech:"You have 90 seconds. Make me want to keep listening. Go.",
+    choices:[
+      {text:"VoiceLife is a revolutionary AI-powered communication platform that leverages natural language processing to optimize interpersonal dynamics...",tag:"🤖 Jargon",correct:false,fb:"No human understood that. Marcus has heard 10 pitches like this today. He's already thinking about lunch. Next!"},
+      {text:"We help companies stop losing money from miscommunication — the #1 reason projects fail. Clients save ₹2CR per year. We want $2M for 5% equity. In 3 years, that's worth $40M.",tag:"💎 Numbers + impact",correct:true,fb:"Tight, specific, outcome-focused. Marcus puts his phone down. That NEVER happens. You're in the room!"},
+      {text:"So basically what we do is... we're kind of like a mix between a coaching app and... have you heard of language learning apps?",tag:"🌀 Confused",correct:false,fb:"You lost him at 'basically.' Never start a pitch without knowing your first sentence cold. Lesson learned."}
+    ],
+    win:{rep:35,con:25,coins:15000,trust:72,mood:"😮",job:"CEO / Founder"},
+    lose:{rep:-25,con:-20,coins:0,trust:8,mood:"😒"}
+  },
+  { city:3, char:{emoji:"🤝",bg:"#fce4ec",name:"Elena Vasquez",role:"Rival Company CEO",mood:"😐",trust:30},
+    speech:"We're both after the same client. My proposal: 60% mine, 40% yours. Take it or lose everything.",
+    choices:[
+      {text:"No way. I want 60-40 in MY favor or I walk.",tag:"💪 Hardball",correct:false,fb:"Power plays without real leverage backfire. Elena walks, takes the client, and talks about you at 3 events."},
+      {text:"Okay fine, 60-40. You've been in this industry longer so I understand.",tag:"😮‍💨 Surrender",correct:false,fb:"You accepted the very first offer! In negotiation, always counter. You left 10% on the table permanently."},
+      {text:"Counter: 50-50, and we both commit to referring future clients from each other's industries. Same pie, bigger table.",tag:"🤝 Win-win",correct:true,fb:"You refused the bad deal AND made it better for both sides. Elena laughs — 'I like how you think.' Deal done!"}
+    ],
+    win:{rep:38,con:28,coins:20000,trust:78,mood:"😊",job:"Global CEO"},
+    lose:{rep:-28,con:-15,coins:0,trust:20,mood:"😕"}
+  },
+  { city:3, char:{emoji:"📰",bg:"#fff8e1",name:"James Lee",role:"Top Magazine Interview",mood:"🤔",trust:40},
+    speech:"You went from unemployed to global CEO fast. What ONE thing made the real difference?",
+    choices:[
+      {text:"Hard work and believing in yourself. If you have a dream, just go for it!",tag:"📢 Cliché",correct:false,fb:"James has written those exact words 500 times. You just became forgettable. Article buries you on page 12."},
+      {text:"Learning to listen first and speak second. I trained myself to truly hear people — and that changed every room I walked into.",tag:"🎓 Wise + real",correct:true,fb:"Quotable, original, and true to your journey. This becomes the pull quote on the cover. Legendary status!"},
+      {text:"Honestly? Luck and being in the right place at the right time.",tag:"🎲 False modesty",correct:false,fb:"Denying your own skills makes you look uncertain. Readers don't follow leaders who discount themselves publicly."}
+    ],
+    win:{rep:40,con:20,coins:10000,trust:85,mood:"🤩",job:"Global CEO"},
+    lose:{rep:-15,con:-10,coins:0,trust:45,mood:"😑"}
+  },
+  // GLOBAL HQ
+  { city:4, char:{emoji:"🌍",bg:"#e8f5e9",name:"World Forum Panel",role:"Global Leaders + Cameras",mood:"😐",trust:50},
+    speech:"You're speaking at the World Economic Forum. Topic: why communication is the most critical skill for the next decade. 3 minutes. Go.",
+    choices:[
+      {text:"Communication is very important for many reasons. In business, at home, and in government, we all need to communicate better. I believe that...",tag:"😴 No impact",correct:false,fb:"No hook, no structure, no memorable line. The cameras drift. You're forgotten before you even sit back down."},
+      {text:"The next decade will be defined not by what we build, but by who we bring together to build it. Only humans can negotiate trust, resolve conflict, and inspire sacrifice. Your voice is your most valuable skill.",tag:"✨ Visionary",correct:true,fb:"The room erupts. Standing ovation! Clip shared 2 million times. You are now a true global thought leader!"},
+      {text:"According to McKinsey, poor communication costs companies $37 billion annually. Therefore investment in communication training should be prioritized across all enterprise sectors...",tag:"📊 Data, no heart",correct:false,fb:"Data without humanity misses the world stage. Leaders here speak to hearts, not spreadsheets. Polite applause."}
+    ],
+    win:{rep:50,con:30,coins:50000,trust:95,mood:"🤩",job:"World Leader"},
+    lose:{rep:-20,con:-25,coins:0,trust:40,mood:"😕"}
+  },
+  { city:4, char:{emoji:"🏆",bg:"#fff3e0",name:"1000 Young Leaders",role:"Your Mentoring Legacy Speech",mood:"😊",trust:80},
+    speech:"You've made it to the very top. A thousand young people are looking up at you right now, ready to begin their journey. What do you tell them?",
+    choices:[
+      {text:"Work hard, believe in yourself, never give up! Success is waiting for those who deserve it!",tag:"📢 Empty",correct:false,fb:"They've heard this from everyone. You had one moment for a lasting legacy. Generic words waste it completely."},
+      {text:"I'm not sure I'm the right person to give advice. Every path is different and what worked for me may not work for you.",tag:"🤷 Too humble",correct:false,fb:"The moment to lead IS right now. False modesty when thousands need guidance is its own kind of failure."},
+      {text:"Every important thing in my life started with one brave conversation. Your voice is not just for talking — it's for building the life only you can live. Start speaking.",tag:"💫 Legendary",correct:true,fb:"1000 young lives changed. Your words are shared worldwide. Your journey is now THEIR beginning. You are a legend!"}
+    ],
+    win:{rep:60,con:40,coins:200000,trust:100,mood:"🥹",job:"Legend 🏆"},
+    lose:{rep:-15,con:-15,coins:0,trust:65,mood:"😕"}
+  }
+];
+
+let state = { playerName:"Player", rep:0, con:50, coins:0, currentQ:0, correctCount:0, currentCity:0, questsInCity:0, answered:false };
+
+// Stars
+(function(){
+  const c = document.getElementById('stars');
+  for(let i=0;i<60;i++){
+    const s=document.createElement('div'); s.className='star';
+    s.style.left=Math.random()*100+'%'; s.style.top=Math.random()*100+'%';
+    s.style.setProperty('--d',(2+Math.random()*4)+'s');
+    s.style.animationDelay=(Math.random()*4)+'s';
+    c.appendChild(s);
+  }
+})();
+
+function startGame(){
+  const n=document.getElementById('player-name').value.trim();
+  state.playerName=n||'Explorer';
+  state.rep=0;state.con=50;state.coins=0;
+  state.currentQ=0;state.correctCount=0;state.currentCity=0;state.questsInCity=0;
+  document.getElementById('display-name').textContent=state.playerName;
+  document.getElementById('display-job').textContent='Unemployed';
+  switchScreen('game-screen');
+  loadQuestion();
+}
+
+function switchScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function loadQuestion(){
+  if(state.currentQ>=QUESTIONS.length){showWin();return;}
+  const q=QUESTIONS[state.currentQ];
+  state.answered=false;
+
+  document.getElementById('city-display').textContent=CITIES[q.city].name;
+  document.getElementById('char-emoji').textContent=q.char.emoji;
+  document.getElementById('char-avatar-big').style.background=q.char.bg;
+  document.getElementById('char-mood').textContent=q.char.mood;
+  document.getElementById('char-name').textContent=q.char.name;
+  document.getElementById('char-role').textContent=q.char.role;
+  document.getElementById('char-speech').textContent=q.char.speech;
+
+  const t=q.char.trust;
+  document.getElementById('trust-fill').style.width=t+'%';
+  document.getElementById('trust-val').textContent=t+'%';
+  document.getElementById('trust-fill').style.background=t<35?'#ff6b6b':t<60?'#ffd700':'#51cf66';
+
+  const container=document.getElementById('choices');
+  container.innerHTML='';
+  const colors=['#667eea','#f093fb','#4facfe'];
+
+  q.choices.forEach((c,i)=>{
+    const btn=document.createElement('button');
+    btn.className='choice-btn';
+    btn.onclick=()=>handleAnswer(i,c.correct,c.fb,btn,q);
+
+    const tag=document.createElement('span');
+    tag.className='choice-tag';
+    tag.style.background=colors[i]+'22';
+    tag.style.color=colors[i];
+    tag.style.border=`1px solid ${colors[i]}55`;
+    tag.textContent=c.tag;
+
+    const txt=document.createTextNode(' '+c.text);
+    btn.appendChild(tag);
+    btn.appendChild(txt);
+    container.appendChild(btn);
+  });
+
+  const rb=document.getElementById('result-banner');
+  rb.classList.remove('show','win','lose');
+  updateProgressDots();
+  updateStats();
+  updateCityProgress();
+}
+
+function handleAnswer(index,isCorrect,feedback,btn,q){
+  if(state.answered)return;
+  state.answered=true;
+  document.querySelectorAll('.choice-btn').forEach(b=>b.disabled=true);
+
+  if(isCorrect){
+    btn.classList.add('correct');
+    const w=q.win;
+    state.rep=Math.min(100,state.rep+w.rep);
+    state.con=Math.min(100,state.con+w.con);
+    state.coins+=w.coins;
+    state.correctCount++;
+    state.questsInCity++;
+    document.getElementById('trust-fill').style.width=w.trust+'%';
+    document.getElementById('trust-val').textContent=w.trust+'%';
+    document.getElementById('trust-fill').style.background='#51cf66';
+    document.getElementById('char-mood').textContent=w.mood;
+    if(w.job)document.getElementById('display-job').textContent=w.job;
+    spawnPop(btn,`+${w.rep}⭐ +${w.coins}💰`,'#51cf66');
+    showResult(true,'🎉 Excellent!',feedback+`\n\n+${w.rep} Reputation · +${w.con} Confidence · +${w.coins} Coins 💰`);
+  } else {
+    btn.classList.add('wrong');
+    const l=q.lose;
+    state.rep=Math.max(0,state.rep+l.rep);
+    state.con=Math.max(0,state.con+l.con);
+    state.questsInCity++;
+    document.getElementById('trust-fill').style.width=l.trust+'%';
+    document.getElementById('trust-val').textContent=l.trust+'%';
+    document.getElementById('trust-fill').style.background='#ff6b6b';
+    document.getElementById('char-mood').textContent=l.mood;
+    spawnPop(btn,`${l.rep}⭐`,'#ff6b6b');
+    showResult(false,'😬 Not quite...',feedback);
+    // Show correct
+    document.querySelectorAll('.choice-btn').forEach((b,i)=>{
+      if(q.choices[i].correct)b.classList.add('correct');
+    });
+  }
+  updateStats();
+  updateCityProgress();
+}
+
+function showResult(win,title,desc){
+  const rb=document.getElementById('result-banner');
+  rb.classList.add('show',win?'win':'lose');
+  document.getElementById('result-title').textContent=title;
+  document.getElementById('result-desc').textContent=desc;
+  const isLast=state.currentQ===QUESTIONS.length-1;
+  document.getElementById('next-btn').textContent=isLast?'Finish & See Results 🏆':'Next Conversation →';
+}
+
+function nextQuestion(){
+  state.currentQ++;
+  if(state.currentQ>=QUESTIONS.length){showWin();return;}
+  const nextCity=QUESTIONS[state.currentQ].city;
+  if(nextCity>state.currentCity){
+    state.currentCity=nextCity;
+    state.questsInCity=0;
+    const u=CITY_UNLOCKS[nextCity];
+    document.getElementById('unlock-emoji').textContent=u.emoji;
+    document.getElementById('unlock-title').textContent=u.title;
+    document.getElementById('unlock-sub').textContent=u.sub;
+    document.getElementById('unlock-desc').textContent=u.desc;
+    switchScreen('city-screen');
+  } else {
+    loadQuestion();
+  }
+}
+
+function continueAfterCity(){ switchScreen('game-screen'); loadQuestion(); }
+
+function showWin(){
+  switchScreen('win-screen');
+  const pct=Math.round((state.correctCount/QUESTIONS.length)*100);
+  document.getElementById('win-title').textContent=`${state.playerName} is a World Leader! 🌍`;
+  document.getElementById('win-sub').textContent=pct===100?'🌟 PERFECT! Master Communicator!':pct>=75?'🎯 Excellent! Very impressive!':pct>=50?'👍 Good job! Keep practising!':'🌱 Keep playing — you\'ll get better!';
+  document.getElementById('final-rep').textContent=state.rep;
+  document.getElementById('final-con').textContent=state.con;
+  document.getElementById('final-coins').textContent=state.coins.toLocaleString();
+  document.getElementById('win-feedback').textContent=`You answered ${state.correctCount} of ${QUESTIONS.length} conversations correctly (${pct}%). `+(pct===100?'Absolutely perfect! You are a true communication champion! 🏆':pct>=75?'Strong performance! You have real people skills. Keep playing to master every scenario!':pct>=50?'Good foundation! Focus on listening carefully and staying calm under pressure. You\'re improving!':'Every great communicator started by making mistakes. Play again and notice how your choices change — you\'ll improve fast!');
+}
+
+function playAgain(){
+  state.rep=0;state.con=50;state.coins=0;state.currentQ=0;state.correctCount=0;state.currentCity=0;state.questsInCity=0;
+  document.getElementById('display-job').textContent='Unemployed';
+  switchScreen('game-screen');
+  loadQuestion();
+}
+
+function updateStats(){
+  document.getElementById('rep-val').textContent=state.rep;
+  document.getElementById('con-val').textContent=state.con;
+  document.getElementById('coin-val').textContent=state.coins>=1000?(state.coins/1000).toFixed(1)+'k':state.coins;
+  const avatars=['😊','🙂','😄','😎','🤩','🌟'];
+  const idx=Math.min(Math.floor(state.rep/20),5);
+  document.getElementById('player-avatar').textContent=avatars[idx];
+}
+
+function updateCityProgress(){
+  if(state.currentQ>=QUESTIONS.length)return;
+  const city=CITIES[QUESTIONS[state.currentQ].city];
+  const pct=Math.min(100,(state.questsInCity/city.questsNeeded)*100);
+  document.getElementById('city-prog').style.width=pct+'%';
+}
+
+function updateProgressDots(){
+  const c=document.getElementById('progress-dots');
+  c.innerHTML='';
+  QUESTIONS.forEach((_,i)=>{
+    const d=document.createElement('div');
+    d.className='dot'+(i<state.currentQ?' done':i===state.currentQ?' current':'');
+    c.appendChild(d);
+  });
+}
+
+function spawnPop(btn,text,color){
+  const rect=btn.getBoundingClientRect();
+  const pop=document.createElement('div');
+  pop.className='score-pop';
+  pop.textContent=text;
+  pop.style.left=(rect.left+rect.width/2-60)+'px';
+  pop.style.top=(rect.top+window.scrollY-10)+'px';
+  pop.style.color=color;
+  document.body.appendChild(pop);
+  setTimeout(()=>pop.remove(),1300);
+}
+</script>
+</body>
+</html>
